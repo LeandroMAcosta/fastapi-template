@@ -1,4 +1,4 @@
-"""Initial example table
+"""Create user table
 
 Revision ID: 0001
 Revises:
@@ -18,15 +18,17 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.create_table(
-        "example",
+        "user",
         sa.Column("id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("name", sa.String(255), nullable=False),
-        sa.Column("description", sa.Text(), nullable=True),
+        sa.Column("email", sa.String(255), unique=True, nullable=False, index=True),
+        sa.Column("hashed_password", sa.String(255), nullable=False),
+        sa.Column("first_name", sa.String(100), nullable=False),
+        sa.Column("last_name", sa.String(100), nullable=False),
+        sa.Column("is_active", sa.Boolean(), server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
-        sa.Column("created_by_id", UUID(as_uuid=True), nullable=True),
     )
 
 
 def downgrade() -> None:
-    op.drop_table("example")
+    op.drop_table("user")

@@ -17,9 +17,10 @@ dependencies = [
     # Validation & Settings
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
+    "email-validator>=2.1.0",
     # Auth
     "python-jose[cryptography]>=3.3.0",
-    "passlib[bcrypt]>=1.7.0",
+    "bcrypt>=4.0.0",
     # Logging
     "structlog>=24.0.0",
     # Monitoring
