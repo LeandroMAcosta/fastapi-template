@@ -1,13 +1,21 @@
-"""E2E conftest — spins up a real PostgreSQL via testcontainers."""
+"""E2E conftest — spins up a real PostgreSQL via testcontainers and runs Alembic migrations."""
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from testcontainers.postgres import PostgresContainer
 
-from app.database.base import Base, get_db
+from app.database.base import get_db
 from app.main import create_app
+
+
+def run_migrations(db_url: str) -> None:
+    alembic_cfg = Config("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", db_url)
+    command.upgrade(alembic_cfg, "head")
 
 
 @pytest.fixture(scope="session")
@@ -17,11 +25,16 @@ def postgres_container():
 
 
 @pytest.fixture(scope="session")
-def db_engine(postgres_container):
-    engine = create_engine(postgres_container.get_connection_url())
-    Base.metadata.create_all(bind=engine)
+def db_url(postgres_container):
+    return postgres_container.get_connection_url()
+
+
+@pytest.fixture(scope="session")
+def db_engine(db_url):
+    run_migrations(db_url)
+    engine = create_engine(db_url)
     yield engine
-    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
 
 
 @pytest.fixture(scope="module")
