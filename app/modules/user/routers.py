@@ -9,7 +9,7 @@ from app.modules.user.filters import UserFilter
 from app.modules.user.schemas import UserResponse, UserUpdate
 from app.modules.user.service import UserService
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(prefix="/users", tags=["Users"], dependencies=[Depends(get_current_user_id)])
 
 
 @router.get("/me", response_model=UserResponse, summary="Get current user")

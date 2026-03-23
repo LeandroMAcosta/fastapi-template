@@ -6,15 +6,21 @@ TEST_TYPE=${1:-unit}
 case $TEST_TYPE in
     unit)
         echo "Running unit tests (no DB)..."
-        uv run pytest tests/unit -v --tb=short
+        uv run pytest tests/unit -v --tb=short \
+            --cov --cov-config=coverage/unit.ini \
+            --cov-report=term-missing --cov-report=html
         ;;
     e2e)
         echo "Running e2e tests (testcontainers PostgreSQL)..."
-        uv run pytest tests/e2e -v --tb=short
+        uv run pytest tests/e2e -v --tb=short \
+            --cov --cov-config=coverage/e2e.ini \
+            --cov-report=term-missing --cov-report=html
         ;;
     all)
         echo "Running all tests..."
-        uv run pytest tests/ -v --tb=short
+        uv run pytest tests/ -v --tb=short \
+            --cov --cov-config=coverage/e2e.ini \
+            --cov-report=term-missing --cov-report=html
         ;;
     *)
         echo "Usage: ./scripts/test.sh [unit|e2e|all]"

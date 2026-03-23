@@ -1,7 +1,10 @@
+from contextlib import asynccontextmanager
+
 import sentry_sdk
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -15,6 +18,17 @@ from app.routers import api_router
 logger = structlog.get_logger()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info(
+        "application_started",
+        app_name=settings.APP_NAME,
+        environment=settings.ENVIRONMENT,
+        debug_mode=settings.DEBUG_MODE,
+    )
+    yield
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
@@ -22,11 +36,21 @@ def create_app() -> FastAPI:
         debug=settings.DEBUG_MODE,
         docs_url="/docs" if settings.DEBUG_MODE else None,
         redoc_url="/redoc" if settings.DEBUG_MODE else None,
+        lifespan=lifespan,
     )
 
     # Sentry
     if settings.SENTRY_DSN:
         sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.ENVIRONMENT, traces_sample_rate=0.1)
+
+    # Global exception handler for unhandled errors
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception):
+        logger.error("unhandled_exception", path=request.url.path, error=str(exc))
+        return JSONResponse(
+            status_code=500,
+            content={"type": "server_error", "message": "Internal server error"},
+        )
 
     # Rate limiting
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -56,16 +80,6 @@ def create_app() -> FastAPI:
             return {"status": "ok", "database": "ok"}
         except Exception:
             return {"status": "degraded", "database": "unavailable"}
-
-    # Startup logging
-    @app.on_event("startup")
-    async def on_startup():
-        logger.info(
-            "application_started",
-            app_name=settings.APP_NAME,
-            environment=settings.ENVIRONMENT,
-            debug_mode=settings.DEBUG_MODE,
-        )
 
     return app
 
