@@ -4,8 +4,9 @@ from fastapi import APIRouter, Body, Depends
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page, Params
 
-from app.modules.auth.dependencies import get_current_user_id, require_permissions
+from app.modules.auth.dependencies import get_current_user, get_current_user_id, require_permissions
 from app.modules.user.filters import UserFilter
+from app.modules.user.models import User
 from app.modules.user.schemas import UserResponse, UserUpdate
 from app.modules.user.service import UserService
 
@@ -13,11 +14,8 @@ router = APIRouter(prefix="/users", tags=["Users"], dependencies=[Depends(get_cu
 
 
 @router.get("/me", response_model=UserResponse, summary="Get current user")
-async def get_me(
-    user_id: UUID = Depends(get_current_user_id),
-    service: UserService = Depends(),
-) -> UserResponse:
-    return await service.get(user_id)
+async def get_me(user: User = Depends(get_current_user)) -> UserResponse:
+    return user
 
 
 @router.get(
