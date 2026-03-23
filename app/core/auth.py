@@ -6,15 +6,16 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.config import settings
-from app.modules.auth.exceptions import InvalidTokenError, TokenExpiredError
+from app.modules.auth.exceptions import InsufficientPermissionsError, InvalidTokenError, TokenExpiredError
 
 security = HTTPBearer()
 
 
-def create_access_token(user_id: UUID, extra_claims: dict | None = None) -> str:
+def create_access_token(user_id: UUID, permissions: list[str], extra_claims: dict | None = None) -> str:
     claims = {
         "sub": str(user_id),
         "type": "access",
+        "permissions": permissions,
         "exp": datetime.now(UTC) + timedelta(minutes=settings.AUTH_ACCESS_TOKEN_EXPIRATION_MINUTES),
         "iat": datetime.now(UTC),
     }
@@ -50,6 +51,23 @@ def _decode_token(token: str, expected_type: str) -> dict:
 def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
     payload = _decode_token(credentials.credentials, expected_type="access")
     return UUID(payload["sub"])
+
+
+def _get_current_token_payload(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    return _decode_token(credentials.credentials, expected_type="access")
+
+
+def require_permissions(*required: str):
+    """Dependency factory: checks that the JWT contains all required permissions."""
+
+    def checker(payload: dict = Depends(_get_current_token_payload)) -> dict:
+        user_permissions = set(payload.get("permissions", []))
+        missing = set(required) - user_permissions
+        if missing:
+            raise InsufficientPermissionsError()
+        return payload
+
+    return checker
 
 
 def decode_refresh_token(token: str) -> UUID:

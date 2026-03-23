@@ -12,6 +12,10 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 limiter = Limiter(key_func=get_remote_address)
 
 
+def _get_user_permissions(user) -> list[str]:
+    return [p.codename for p in user.role.permissions]
+
+
 @router.post(
     "/register",
     status_code=201,
@@ -46,8 +50,9 @@ async def login(
     if not user.is_active:
         raise UserDisabledError()
 
+    permissions = _get_user_permissions(user)
     return TokenResponse(
-        access_token=create_access_token(user_id=user.id),
+        access_token=create_access_token(user_id=user.id, permissions=permissions),
         refresh_token=create_refresh_token(user_id=user.id),
     )
 
@@ -69,7 +74,8 @@ async def refresh(
     if not user.is_active:
         raise UserDisabledError()
 
+    permissions = _get_user_permissions(user)
     return TokenResponse(
-        access_token=create_access_token(user_id=user.id),
+        access_token=create_access_token(user_id=user.id, permissions=permissions),
         refresh_token=create_refresh_token(user_id=user.id),
     )

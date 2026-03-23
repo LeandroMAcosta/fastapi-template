@@ -19,11 +19,13 @@ class UserService(BaseService[User]):
         if existing:
             raise UserAlreadyExistsError()
 
+        default_role = await self.repository.get_default_role()
         user = User(
             email=data.email,
             hashed_password=self._hash_password(data.password),
             first_name=data.first_name,
             last_name=data.last_name,
+            role_id=default_role.id,
         )
         return await self.repository.save(user)
 

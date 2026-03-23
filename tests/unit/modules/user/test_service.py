@@ -15,12 +15,14 @@ class TestUserServiceCreate:
     def setup_method(self):
         self.mock_repo = MagicMock()
         self.mock_repo.get_by_email = AsyncMock()
+        self.mock_repo.get_default_role = AsyncMock()
         self.mock_repo.save = AsyncMock()
         self.service = UserService(repository=self.mock_repo)
 
     async def test_creates_user_with_hashed_password(self):
         data = UserCreateFactory.build()
         self.mock_repo.get_by_email.return_value = None
+        self.mock_repo.get_default_role.return_value = MagicMock(id=uuid4())
         self.mock_repo.save.side_effect = lambda user: user
 
         result = await self.service.create_user(data)

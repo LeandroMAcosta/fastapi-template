@@ -17,6 +17,13 @@ class UserUpdate(BaseModel):
     email: EmailStr | None = None
 
 
+class RoleResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -25,5 +32,6 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     is_active: bool
+    role: RoleResponse
     created_at: datetime
     updated_at: datetime
