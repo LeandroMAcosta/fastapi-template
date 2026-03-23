@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from app.core.auth import create_access_token, create_refresh_token, decode_refresh_token
+from app.modules.auth.exceptions import InvalidCredentialsError, UserDisabledError
 from app.modules.auth.schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse
 from app.modules.user.schemas import UserResponse
 from app.modules.user.service import UserService
@@ -41,9 +42,9 @@ async def login(
 ) -> TokenResponse:
     user = await service.get_by_email(data.email)
     if not user or not service.verify_password(data.password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise InvalidCredentialsError()
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is disabled")
+        raise UserDisabledError()
 
     return TokenResponse(
         access_token=create_access_token(user_id=user.id),
@@ -66,7 +67,7 @@ async def refresh(
     user_id = decode_refresh_token(data.refresh_token)
     user = await service.get(user_id)
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is disabled")
+        raise UserDisabledError()
 
     return TokenResponse(
         access_token=create_access_token(user_id=user.id),

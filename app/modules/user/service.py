@@ -1,8 +1,8 @@
 import bcrypt
 from fastapi import Depends
 
-from app.core.exceptions import DuplicateError
 from app.database.service import BaseService
+from app.modules.user.exceptions import UserAlreadyExistsError
 from app.modules.user.models import User
 from app.modules.user.repository import UserRepository
 from app.modules.user.schemas import UserCreate
@@ -17,7 +17,7 @@ class UserService(BaseService[User]):
     async def create_user(self, data: UserCreate) -> User:
         existing = await self.repository.get_by_email(data.email)
         if existing:
-            raise DuplicateError("User with this email already exists")
+            raise UserAlreadyExistsError()
 
         user = User(
             email=data.email,

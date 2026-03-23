@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.core.exceptions import DuplicateError
+from app.modules.user.exceptions import UserAlreadyExistsError
 from app.modules.user.models import User
 from app.modules.user.service import UserService
 from tests.factories.user import UserCreateFactory
@@ -40,7 +40,7 @@ class TestUserServiceCreate:
             last_name="B",
         )
 
-        with pytest.raises(DuplicateError):
+        with pytest.raises(UserAlreadyExistsError):
             await self.service.create_user(data)
 
         self.mock_repo.save.assert_not_called()
