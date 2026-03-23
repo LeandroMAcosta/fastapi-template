@@ -11,6 +11,23 @@ processors:
     timeout: 5s
     send_batch_size: 1024
 
+  # Truncate log bodies larger than 4KB to prevent cost spikes
+  transform/truncate_logs:
+    log_statements:
+      - context: log
+        statements:
+          - truncate_all(attributes, 256)
+          - truncate_all(resource.attributes, 256)
+          - limit(attributes, 10)
+
+  # Drop noisy or unwanted logs
+  filter/logs:
+    logs:
+      exclude:
+        match_type: regexp
+        bodies:
+          - ".*healthcheck.*"
+
 exporters:
   otlphttp/tempo:
     endpoint: http://tempo:4318
@@ -33,7 +50,7 @@ service:
       exporters: [otlphttp/tempo]
     logs:
       receivers: [otlp]
-      processors: [batch]
+      processors: [filter/logs, transform/truncate_logs, batch]
       exporters: [loki]
     metrics:
       receivers: [otlp]

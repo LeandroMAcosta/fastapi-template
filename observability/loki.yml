@@ -27,3 +27,7 @@ schema_config:
 limits_config:
   allow_structured_metadata: true
   volume_enabled: true
+  max_line_size: 8192               # reject lines > 8KB
+  ingestion_rate_mb: 4              # max 4MB/s ingestion
+  ingestion_burst_size_mb: 6
+  per_stream_rate_limit: 3MB        # max 3MB/s per label stream
