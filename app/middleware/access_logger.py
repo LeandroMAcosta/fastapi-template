@@ -1,35 +1,22 @@
-import time
 import uuid
 
 import structlog
+from opentelemetry import trace
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
 
-logger = structlog.get_logger()
 
-
-class AccessLoggerMiddleware(BaseHTTPMiddleware):
+class TraceContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
-        request.state.request_id = request_id
+        span = trace.get_current_span()
+        ctx = span.get_span_context()
+        trace_id = format(ctx.trace_id, "032x") if ctx.trace_id else str(uuid.uuid4())
 
         structlog.contextvars.clear_contextvars()
-        structlog.contextvars.bind_contextvars(request_id=request_id)
-
-        start_time = time.perf_counter()
+        structlog.contextvars.bind_contextvars(trace_id=trace_id)
 
         response = await call_next(request)
-
-        duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
-        response.headers["X-Request-ID"] = request_id
-
-        logger.info(
-            "request",
-            method=request.method,
-            path=request.url.path,
-            status=response.status_code,
-            duration_ms=duration_ms,
-        )
+        response.headers["X-Trace-ID"] = trace_id
 
         return response

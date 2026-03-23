@@ -5,7 +5,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import settings
-from app.middleware.access_logger import AccessLoggerMiddleware
+from app.middleware.access_logger import TraceContextMiddleware
 from app.modules.auth.routers import limiter
 
 
@@ -16,7 +16,7 @@ def register_middleware(app: FastAPI) -> None:
     app.add_middleware(SlowAPIMiddleware)
 
     # Middleware (order matters: first added = outermost)
-    app.add_middleware(AccessLoggerMiddleware)
+    app.add_middleware(TraceContextMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.FRONTEND_URL, "http://localhost:3000"],
