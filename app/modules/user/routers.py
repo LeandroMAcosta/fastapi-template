@@ -46,27 +46,13 @@ async def get_user(
 
 
 @router.patch(
-    "/{user_id}",
+    "/me",
     response_model=UserResponse,
-    summary="Update user",
-    dependencies=[Depends(require_permissions("user:update"))],
+    summary="Update current user",
 )
-async def update_user(
-    user_id: UUID,
+async def update_me(
     data: UserUpdate = Body(...),
+    user: User = Depends(get_current_user),
     service: UserService = Depends(),
 ) -> UserResponse:
-    return await service.update(user_id, data.model_dump(exclude_unset=True))
-
-
-@router.delete(
-    "/{user_id}",
-    status_code=204,
-    summary="Delete user",
-    dependencies=[Depends(require_permissions("user:delete"))],
-)
-async def delete_user(
-    user_id: UUID,
-    service: UserService = Depends(),
-) -> None:
-    await service.delete(user_id)
+    return await service.update(user.id, data)

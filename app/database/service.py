@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
+from pydantic import BaseModel
 
 from app.database.base import Base
 from app.database.repository import SQLAlchemyRepository
@@ -16,8 +17,8 @@ class BaseService(Generic[T]):
     def __init__(self, repository: SQLAlchemyRepository[T]):
         self.repository = repository
 
-    async def get(self, entity_id: UUID) -> T:
-        return await self.repository.get(entity_id)
+    async def get(self, entity_id: UUID, *, raise_if_not_found: bool = True) -> T | None:
+        return await self.repository.get(entity_id, raise_if_not_found=raise_if_not_found)
 
     async def get_all(
         self,
@@ -29,7 +30,7 @@ class BaseService(Generic[T]):
     async def create(self, entity: T) -> T:
         return await self.repository.save(entity)
 
-    async def update(self, entity_id: UUID, data: dict) -> T:
+    async def update(self, entity_id: UUID, data: BaseModel) -> T:
         return await self.repository.update(entity_id, data)
 
     async def delete(self, entity_id: UUID) -> None:

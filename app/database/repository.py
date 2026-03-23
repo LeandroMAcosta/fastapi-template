@@ -5,6 +5,7 @@ from fastapi import Depends
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,9 +24,9 @@ class SQLAlchemyRepository(Generic[T]):
     def __init__(self, db: AsyncSession = Depends(get_db)):
         self.db = db
 
-    async def get(self, entity_id: UUID) -> T:
+    async def get(self, entity_id: UUID, *, raise_if_not_found: bool = True) -> T | None:
         entity = await self.db.get(self.model, entity_id)
-        if not entity:
+        if not entity and raise_if_not_found:
             raise NotFoundError(f"{self.model.__name__} with id {entity_id} not found")
         return entity
 
@@ -68,9 +69,9 @@ class SQLAlchemyRepository(Generic[T]):
                 raise DuplicateError(f"Duplicate {self.model.__name__} found")
             raise
 
-    async def update(self, entity_id: UUID, data: dict) -> T:
+    async def update(self, entity_id: UUID, data: BaseModel) -> T:
         entity = await self.get(entity_id)
-        for key, value in data.items():
+        for key, value in data.model_dump(exclude_unset=True).items():
             if hasattr(entity, key):
                 setattr(entity, key, value)
         await self.db.commit()

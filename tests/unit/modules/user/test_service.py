@@ -62,7 +62,7 @@ class TestUserServiceGet:
 
         result = await self.service.get(user_id)
 
-        self.mock_repo.get.assert_called_once_with(user_id)
+        self.mock_repo.get.assert_called_once_with(user_id, raise_if_not_found=True)
         assert result.id == user_id
 
     async def test_get_by_email(self):

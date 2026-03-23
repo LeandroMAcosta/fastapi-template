@@ -15,7 +15,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         message = f"{field}: {first.get('msg', 'Invalid input')}" if field else first.get("msg", "Invalid input")
         return JSONResponse(
             status_code=422,
-            content={"type": "validation_error", "message": message, "errors": errors},
+            content={"type": "validation_error", "message": message, "data": errors},
         )
 
     @app.exception_handler(Exception)
