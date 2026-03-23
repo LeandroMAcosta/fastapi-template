@@ -1,11 +1,11 @@
-"""Unit tests for JWT auth — no DB needed."""
+"""Unit tests for auth service (JWT tokens) — no DB needed."""
 
 from uuid import uuid4
 
 import jwt
 
-from app.core.auth import create_access_token, create_refresh_token, decode_refresh_token
 from app.core.config import settings
+from app.modules.auth.service import create_access_token, create_refresh_token, decode_refresh_token
 
 
 class TestCreateAccessToken:

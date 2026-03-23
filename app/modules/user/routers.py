@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends
 from fastapi_filter import FilterDepends
 from fastapi_pagination import Page, Params
 
-from app.core.auth import get_current_user_id, require_permissions
+from app.modules.auth.dependencies import get_current_user_id, require_permissions
 from app.modules.user.filters import UserFilter
 from app.modules.user.schemas import UserResponse, UserUpdate
 from app.modules.user.service import UserService

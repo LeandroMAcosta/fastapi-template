@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from app.core.auth import create_access_token, create_refresh_token, decode_refresh_token
 from app.modules.auth.exceptions import InvalidCredentialsError, UserDisabledError
 from app.modules.auth.schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse
+from app.modules.auth.service import create_access_token, create_refresh_token, decode_refresh_token
 from app.modules.user.schemas import UserResponse
 from app.modules.user.service import UserService
 
