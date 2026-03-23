@@ -7,10 +7,11 @@ from app.core.config import settings
 from app.modules.auth.exceptions import InvalidTokenError, TokenExpiredError
 
 
-def create_access_token(user_id: UUID, permissions: list[str], extra_claims: dict | None = None) -> str:
+def create_access_token(user_id: UUID, role: str, permissions: list[str], extra_claims: dict | None = None) -> str:
     claims = {
         "sub": str(user_id),
         "type": "access",
+        "role": role,
         "permissions": permissions,
         "exp": datetime.now(UTC) + timedelta(minutes=settings.AUTH_ACCESS_TOKEN_EXPIRATION_MINUTES),
         "iat": datetime.now(UTC),

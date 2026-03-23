@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     AUTH_ACCESS_TOKEN_EXPIRATION_MINUTES: int = 15
     AUTH_REFRESH_TOKEN_EXPIRATION_DAYS: int = 7
 
+    # Cookies
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: str = "lax"
+    COOKIE_DOMAIN: str = ""
+
     # CORS
     FRONTEND_URL: str = "http://localhost:3000"
 

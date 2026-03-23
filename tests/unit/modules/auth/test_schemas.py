@@ -38,6 +38,6 @@ class TestRefreshRequest:
         schema = RefreshRequest(refresh_token="some-token")
         assert schema.refresh_token == "some-token"
 
-    def test_missing_token(self):
-        with pytest.raises(ValidationError):
-            RefreshRequest()
+    def test_missing_token_defaults_to_none(self):
+        schema = RefreshRequest()
+        assert schema.refresh_token is None

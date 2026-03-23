@@ -32,15 +32,14 @@ services:
       - ./app:/app/app
 
   frontend:
-    build: ../react-template
+    build:
+      context: ../react-template
+      args:
+        VITE_API_URL: http://localhost:8000
     ports:
-      - "5173:5173"
-    environment:
-      VITE_API_URL: http://localhost:8000
+      - "3000:80"
     depends_on:
       - api
-    volumes:
-      - ../react-template/src:/app/src
 
 volumes:
   pgdata:

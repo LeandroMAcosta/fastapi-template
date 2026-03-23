@@ -11,17 +11,18 @@ from app.modules.auth.service import create_access_token, create_refresh_token, 
 class TestCreateAccessToken:
     def test_creates_valid_token(self):
         user_id = uuid4()
-        token = create_access_token(user_id=user_id, permissions=["user:read"])
+        token = create_access_token(user_id=user_id, role="user", permissions=["user:read"])
         payload = jwt.decode(token, settings.AUTH_JWT_SECRET, algorithms=[settings.AUTH_JWT_ALGORITHM])
         assert payload["sub"] == str(user_id)
         assert payload["type"] == "access"
+        assert payload["role"] == "user"
         assert payload["permissions"] == ["user:read"]
         assert "exp" in payload
         assert "iat" in payload
 
     def test_includes_extra_claims(self):
         user_id = uuid4()
-        token = create_access_token(user_id=user_id, permissions=[], extra_claims={"custom": "value"})
+        token = create_access_token(user_id=user_id, role="user", permissions=[], extra_claims={"custom": "value"})
         payload = jwt.decode(token, settings.AUTH_JWT_SECRET, algorithms=[settings.AUTH_JWT_ALGORITHM])
         assert payload["custom"] == "value"
 
