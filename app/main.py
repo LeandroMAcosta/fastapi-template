@@ -13,11 +13,13 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import settings
 from app.core.logging import setup_logging
+from app.core.telemetry import setup_telemetry
 from app.database.base import check_db_health
 from app.middleware.access_logger import AccessLoggerMiddleware
 from app.routers import api_router
 
 setup_logging()
+setup_telemetry()
 logger = structlog.get_logger()
 
 
@@ -68,6 +70,9 @@ def create_app() -> FastAPI:
         )
 
     # Rate limiting
+    from app.modules.auth.routers import limiter
+
+    app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.add_middleware(SlowAPIMiddleware)
 

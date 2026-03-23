@@ -35,5 +35,11 @@ class Settings(BaseSettings):
     # Sentry
     SENTRY_DSN: str = ""
 
+    # OpenTelemetry
+    OTEL_ENABLED: bool = False
+    OTEL_SERVICE_NAME: str = "fastapi-template"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4318"
+    OTEL_TRACES_SAMPLE_RATE: float = 1.0
+
 
 settings = Settings()

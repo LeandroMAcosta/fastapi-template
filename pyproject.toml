@@ -25,6 +25,12 @@ dependencies = [
     "slowapi>=0.1.9",
     # Logging
     "structlog>=24.0.0",
+    # Observability (OpenTelemetry)
+    "opentelemetry-api>=1.29.0",
+    "opentelemetry-sdk>=1.29.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.29.0",
+    "opentelemetry-instrumentation-fastapi>=0.50b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.50b0",
     # Monitoring
     "sentry-sdk[fastapi]>=2.0.0",
 ]
