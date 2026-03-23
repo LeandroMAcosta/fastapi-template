@@ -1,10 +1,8 @@
-import uuid
-
 from sqlalchemy import Column, ForeignKey, String, Table
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database.base import Base
+from app.database.base import Base, BaseModel
 
 role_permission = Table(
     "role_permission",
@@ -14,18 +12,16 @@ role_permission = Table(
 )
 
 
-class Permission(Base):
+class Permission(BaseModel):
     __tablename__ = "permission"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     codename: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
     description: Mapped[str] = mapped_column(String(255), nullable=False, default="")
 
 
-class Role(Base):
+class Role(BaseModel):
     __tablename__ = "role"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     description: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     permissions: Mapped[list[Permission]] = relationship(secondary=role_permission, lazy="selectin")
