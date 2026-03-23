@@ -1,4 +1,12 @@
+from enum import StrEnum
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Environment(StrEnum):
+    LOCAL = "local"
+    STAGING = "staging"
+    PRODUCTION = "production"
 
 
 class Settings(BaseSettings):
@@ -7,7 +15,7 @@ class Settings(BaseSettings):
     # App
     APP_NAME: str = "FastAPI Template"
     DEBUG_MODE: bool = False
-    ENVIRONMENT: str = "local"
+    ENVIRONMENT: Environment = Environment.LOCAL
 
     # Database
     DB_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/app_db"

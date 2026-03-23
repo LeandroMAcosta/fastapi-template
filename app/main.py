@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import sentry_sdk
 import structlog
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
@@ -11,10 +12,12 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import settings
+from app.core.logging import setup_logging
 from app.database.base import check_db_health
 from app.middleware.access_logger import AccessLoggerMiddleware
 from app.routers import api_router
 
+setup_logging()
 logger = structlog.get_logger()
 
 
@@ -42,6 +45,18 @@ def create_app() -> FastAPI:
     # Sentry
     if settings.SENTRY_DSN:
         sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.ENVIRONMENT, traces_sample_rate=0.1)
+
+    # Validation error handler (422 → consistent format)
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        errors = exc.errors()
+        first = errors[0] if errors else {}
+        field = " → ".join(str(loc) for loc in first.get("loc", []) if loc != "body")
+        message = f"{field}: {first.get('msg', 'Invalid input')}" if field else first.get("msg", "Invalid input")
+        return JSONResponse(
+            status_code=422,
+            content={"type": "validation_error", "message": message, "errors": errors},
+        )
 
     # Global exception handler for unhandled errors
     @app.exception_handler(Exception)
