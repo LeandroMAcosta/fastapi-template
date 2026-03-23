@@ -3,9 +3,8 @@
 import pytest
 from alembic import command
 from alembic.config import Config
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
 from app.database.base import get_db
@@ -30,29 +29,38 @@ def db_url(postgres_container):
 
 
 @pytest.fixture(scope="session")
-def db_engine(db_url):
+def async_db_url(db_url):
+    return db_url.replace("psycopg2", "psycopg").replace("postgresql://", "postgresql+psycopg://")
+
+
+@pytest.fixture(scope="session")
+def _run_migrations(db_url):
     run_migrations(db_url)
-    engine = create_engine(db_url)
+
+
+@pytest.fixture(scope="session")
+def async_engine(async_db_url, _run_migrations):
+    engine = create_async_engine(async_db_url)
     yield engine
-    engine.dispose()
 
 
 @pytest.fixture(scope="module")
-def db_session(db_engine):
-    session_factory = sessionmaker(bind=db_engine, autocommit=False, autoflush=False)
-    session = session_factory()
-    yield session
-    session.rollback()
-    session.close()
+async def db_session(async_engine):
+    session_factory = async_sessionmaker(bind=async_engine, autocommit=False, autoflush=False, expire_on_commit=False)
+    async with session_factory() as session:
+        yield session
+        await session.rollback()
 
 
 @pytest.fixture(scope="module")
-def client(db_session):
+async def client(db_session):
     app = create_app()
 
-    def override_get_db():
+    async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as c:
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c

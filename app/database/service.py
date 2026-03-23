@@ -16,24 +16,24 @@ class BaseService(Generic[T]):
     def __init__(self, repository: SQLAlchemyRepository[T]):
         self.repository = repository
 
-    def get(self, entity_id: UUID) -> T:
-        return self.repository.get(entity_id)
+    async def get(self, entity_id: UUID) -> T:
+        return await self.repository.get(entity_id)
 
-    def get_all(
+    async def get_all(
         self,
         entity_filter: Filter | None = None,
         pagination_params: Params | None = None,
     ) -> Page[T] | list[T]:
-        return self.repository.get_all(entity_filter=entity_filter, pagination_params=pagination_params)
+        return await self.repository.get_all(entity_filter=entity_filter, pagination_params=pagination_params)
 
-    def create(self, entity: T) -> T:
-        return self.repository.save(entity)
+    async def create(self, entity: T) -> T:
+        return await self.repository.save(entity)
 
-    def update(self, entity_id: UUID, data: dict) -> T:
-        return self.repository.update(entity_id, data)
+    async def update(self, entity_id: UUID, data: dict) -> T:
+        return await self.repository.update(entity_id, data)
 
-    def delete(self, entity_id: UUID) -> None:
-        return self.repository.delete(entity_id)
+    async def delete(self, entity_id: UUID) -> None:
+        return await self.repository.delete(entity_id)
 
-    def count(self, entity_filter: Filter | None = None) -> int:
-        return self.repository.count(entity_filter)
+    async def count(self, entity_filter: Filter | None = None) -> int:
+        return await self.repository.count(entity_filter)

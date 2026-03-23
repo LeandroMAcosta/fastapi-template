@@ -1,6 +1,6 @@
 """Unit tests for user service — mocked repository, no DB."""
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -14,28 +14,34 @@ from tests.factories.user import UserCreateFactory
 class TestUserServiceCreate:
     def setup_method(self):
         self.mock_repo = MagicMock()
+        self.mock_repo.get_by_email = AsyncMock()
+        self.mock_repo.save = AsyncMock()
         self.service = UserService(repository=self.mock_repo)
 
-    def test_creates_user_with_hashed_password(self):
+    async def test_creates_user_with_hashed_password(self):
         data = UserCreateFactory.build()
         self.mock_repo.get_by_email.return_value = None
         self.mock_repo.save.side_effect = lambda user: user
 
-        result = self.service.create_user(data)
+        result = await self.service.create_user(data)
 
         self.mock_repo.get_by_email.assert_called_once_with(data.email)
         self.mock_repo.save.assert_called_once()
         assert result.email == data.email
         assert result.hashed_password != data.password
 
-    def test_duplicate_email_raises(self):
+    async def test_duplicate_email_raises(self):
         data = UserCreateFactory.build()
         self.mock_repo.get_by_email.return_value = User(
-            id=uuid4(), email=data.email, hashed_password="x", first_name="A", last_name="B",
+            id=uuid4(),
+            email=data.email,
+            hashed_password="x",
+            first_name="A",
+            last_name="B",
         )
 
         with pytest.raises(DuplicateError):
-            self.service.create_user(data)
+            await self.service.create_user(data)
 
         self.mock_repo.save.assert_not_called()
 
@@ -43,23 +49,25 @@ class TestUserServiceCreate:
 class TestUserServiceGet:
     def setup_method(self):
         self.mock_repo = MagicMock()
+        self.mock_repo.get = AsyncMock()
+        self.mock_repo.get_by_email = AsyncMock()
         self.service = UserService(repository=self.mock_repo)
 
-    def test_get_by_id(self):
+    async def test_get_by_id(self):
         user_id = uuid4()
         expected = User(id=user_id, email="test@test.com", hashed_password="x", first_name="A", last_name="B")
         self.mock_repo.get.return_value = expected
 
-        result = self.service.get(user_id)
+        result = await self.service.get(user_id)
 
         self.mock_repo.get.assert_called_once_with(user_id)
         assert result.id == user_id
 
-    def test_get_by_email(self):
+    async def test_get_by_email(self):
         expected = User(id=uuid4(), email="test@test.com", hashed_password="x", first_name="A", last_name="B")
         self.mock_repo.get_by_email.return_value = expected
 
-        result = self.service.get_by_email("test@test.com")
+        result = await self.service.get_by_email("test@test.com")
 
         assert result.email == "test@test.com"
 

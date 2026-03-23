@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.modules.auth.schemas import LoginRequest, RegisterRequest
+from app.modules.auth.schemas import LoginRequest, RefreshRequest, RegisterRequest
 from tests.factories.user import RegisterRequestFactory
 
 
@@ -26,3 +26,18 @@ class TestRegisterRequest:
     def test_missing_fields(self):
         with pytest.raises(ValidationError):
             RegisterRequest(email="test@example.com")
+
+    def test_inherits_from_user_create(self):
+        from app.modules.user.schemas import UserCreate
+
+        assert issubclass(RegisterRequest, UserCreate)
+
+
+class TestRefreshRequest:
+    def test_valid(self):
+        schema = RefreshRequest(refresh_token="some-token")
+        assert schema.refresh_token == "some-token"
+
+    def test_missing_token(self):
+        with pytest.raises(ValidationError):
+            RefreshRequest()

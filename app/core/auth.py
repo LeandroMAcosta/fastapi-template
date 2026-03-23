@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 
 from app.core.config import settings
 
@@ -13,24 +13,44 @@ security = HTTPBearer()
 def create_access_token(user_id: UUID, extra_claims: dict | None = None) -> str:
     claims = {
         "sub": str(user_id),
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=settings.AUTH_JWT_EXPIRATION_MINUTES),
-        "iat": datetime.now(timezone.utc),
+        "type": "access",
+        "exp": datetime.now(UTC) + timedelta(minutes=settings.AUTH_ACCESS_TOKEN_EXPIRATION_MINUTES),
+        "iat": datetime.now(UTC),
     }
     if extra_claims:
         claims.update(extra_claims)
     return jwt.encode(claims, settings.AUTH_JWT_SECRET, algorithm=settings.AUTH_JWT_ALGORITHM)
 
 
-def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
+def create_refresh_token(user_id: UUID) -> str:
+    claims = {
+        "sub": str(user_id),
+        "type": "refresh",
+        "exp": datetime.now(UTC) + timedelta(days=settings.AUTH_REFRESH_TOKEN_EXPIRATION_DAYS),
+        "iat": datetime.now(UTC),
+    }
+    return jwt.encode(claims, settings.AUTH_JWT_SECRET, algorithm=settings.AUTH_JWT_ALGORITHM)
+
+
+def _decode_token(token: str, expected_type: str) -> dict:
     try:
-        payload = jwt.decode(
-            credentials.credentials,
-            settings.AUTH_JWT_SECRET,
-            algorithms=[settings.AUTH_JWT_ALGORITHM],
-        )
-        user_id = payload.get("sub")
-        if user_id is None:
+        payload = jwt.decode(token, settings.AUTH_JWT_SECRET, algorithms=[settings.AUTH_JWT_ALGORITHM])
+        if payload.get("type") != expected_type:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type")
+        if payload.get("sub") is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-        return UUID(user_id)
-    except JWTError:
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+
+def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> UUID:
+    payload = _decode_token(credentials.credentials, expected_type="access")
+    return UUID(payload["sub"])
+
+
+def decode_refresh_token(token: str) -> UUID:
+    payload = _decode_token(token, expected_type="refresh")
+    return UUID(payload["sub"])

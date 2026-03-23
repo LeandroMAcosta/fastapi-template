@@ -4,9 +4,9 @@ from tests.factories.user import RegisterRequestFactory
 
 
 class TestRegister:
-    def test_returns_201(self, client):
+    async def test_returns_201(self, client):
         data = RegisterRequestFactory.build()
-        response = client.post("/api/v1/auth/register", json=data.model_dump())
+        response = await client.post("/api/v1/auth/register", json=data.model_dump())
         assert response.status_code == 201
         body = response.json()
         assert body["email"] == data.email
@@ -14,41 +14,70 @@ class TestRegister:
         assert "hashed_password" not in body
         assert "id" in body
 
-    def test_duplicate_email_returns_409(self, client):
+    async def test_duplicate_email_returns_409(self, client):
         data = RegisterRequestFactory.build()
-        client.post("/api/v1/auth/register", json=data.model_dump())
+        await client.post("/api/v1/auth/register", json=data.model_dump())
 
-        response = client.post("/api/v1/auth/register", json=data.model_dump())
+        response = await client.post("/api/v1/auth/register", json=data.model_dump())
         assert response.status_code == 409
 
 
 class TestLogin:
-    def test_valid_credentials(self, client):
+    async def test_valid_credentials(self, client):
         data = RegisterRequestFactory.build()
-        client.post("/api/v1/auth/register", json=data.model_dump())
+        await client.post("/api/v1/auth/register", json=data.model_dump())
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/auth/login",
             json={"email": data.email, "password": data.password},
         )
         assert response.status_code == 200
         body = response.json()
         assert "access_token" in body
+        assert "refresh_token" in body
         assert body["token_type"] == "bearer"
 
-    def test_wrong_password(self, client):
+    async def test_wrong_password(self, client):
         data = RegisterRequestFactory.build()
-        client.post("/api/v1/auth/register", json=data.model_dump())
+        await client.post("/api/v1/auth/register", json=data.model_dump())
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/auth/login",
             json={"email": data.email, "password": "wrong-password"},
         )
         assert response.status_code == 401
 
-    def test_nonexistent_email(self, client):
-        response = client.post(
+    async def test_nonexistent_email(self, client):
+        response = await client.post(
             "/api/v1/auth/login",
             json={"email": "nobody@example.com", "password": "pass"},
+        )
+        assert response.status_code == 401
+
+
+class TestRefresh:
+    async def test_refresh_returns_new_tokens(self, client):
+        data = RegisterRequestFactory.build()
+        await client.post("/api/v1/auth/register", json=data.model_dump())
+
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            json={"email": data.email, "password": data.password},
+        )
+        refresh_token = login_response.json()["refresh_token"]
+
+        response = await client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": refresh_token},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert "access_token" in body
+        assert "refresh_token" in body
+
+    async def test_invalid_refresh_token(self, client):
+        response = await client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": "invalid-token"},
         )
         assert response.status_code == 401

@@ -1,4 +1,5 @@
 import bcrypt
+from fastapi import Depends
 
 from app.core.exceptions import DuplicateError
 from app.database.service import BaseService
@@ -10,11 +11,11 @@ from app.modules.user.schemas import UserCreate
 class UserService(BaseService[User]):
     repository: UserRepository
 
-    def __init__(self, repository: UserRepository):
+    def __init__(self, repository: UserRepository = Depends()):
         super().__init__(repository)
 
-    def create_user(self, data: UserCreate) -> User:
-        existing = self.repository.get_by_email(data.email)
+    async def create_user(self, data: UserCreate) -> User:
+        existing = await self.repository.get_by_email(data.email)
         if existing:
             raise DuplicateError("User with this email already exists")
 
@@ -24,10 +25,10 @@ class UserService(BaseService[User]):
             first_name=data.first_name,
             last_name=data.last_name,
         )
-        return self.repository.save(user)
+        return await self.repository.save(user)
 
-    def get_by_email(self, email: str) -> User | None:
-        return self.repository.get_by_email(email)
+    async def get_by_email(self, email: str) -> User | None:
+        return await self.repository.get_by_email(email)
 
     @staticmethod
     def _hash_password(password: str) -> str:

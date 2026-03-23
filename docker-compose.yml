@@ -21,7 +21,7 @@ services:
       - "8000:8000"
     env_file: .env
     environment:
-      DB_URL: postgresql+psycopg2://postgres:postgres@db:5432/app_db
+      DB_URL: postgresql+psycopg://postgres:postgres@db:5432/app_db
     depends_on:
       db:
         condition: service_healthy

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "local"
 
     # Database
-    DB_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/app_db"
+    DB_URL: str = "postgresql+psycopg://postgres:postgres@localhost:5432/app_db"
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 50
     DB_POOL_PRE_PING: bool = True
@@ -18,7 +18,8 @@ class Settings(BaseSettings):
     # Auth
     AUTH_JWT_SECRET: str = "change-me-in-production"
     AUTH_JWT_ALGORITHM: str = "HS256"
-    AUTH_JWT_EXPIRATION_MINUTES: int = 60
+    AUTH_ACCESS_TOKEN_EXPIRATION_MINUTES: int = 15
+    AUTH_REFRESH_TOKEN_EXPIRATION_DAYS: int = 7
 
     # CORS
     FRONTEND_URL: str = "http://localhost:3000"
