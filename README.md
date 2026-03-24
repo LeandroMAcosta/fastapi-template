@@ -2,6 +2,10 @@
 
 [![CI](https://github.com/LeandroMAcosta/fastapi-template/actions/workflows/ci.yml/badge.svg)](https://github.com/LeandroMAcosta/fastapi-template/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/LeandroMAcosta/fastapi-template/branch/main/graph/badge.svg)](https://codecov.io/gh/LeandroMAcosta/fastapi-template)
+![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
+![License](https://img.shields.io/github/license/LeandroMAcosta/fastapi-template)
 
 Production-ready FastAPI template with async PostgreSQL, JWT auth, RBAC, repository pattern, dependency injection, and full observability stack.
 
